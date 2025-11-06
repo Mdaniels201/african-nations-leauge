@@ -30,13 +30,33 @@ git push origin main
    - Start Command: `gunicorn app:app`
    - Root Directory: `backend`
 
-5. **Environment Variables** (Add these in Render dashboard):
+5. **Environment Variables** (⚠️ CRITICAL - Add ALL these in Render dashboard):
    ```
+   # Email Configuration (Optional - for match notifications)
    EMAIL_USER=your-gmail@gmail.com
-   EMAIL_PASSWORD=wkwt skbd ccri sygc
+   EMAIL_PASSWORD=your-app-password
+   
+   # AI Commentary (Optional - for Gemini AI)
    GEMINI_API_KEY=your-gemini-api-key
+   
+   # Firebase Database (REQUIRED - get from Firebase Console)
+   FIREBASE_TYPE=service_account
+   FIREBASE_PROJECT_ID=your-project-id
+   FIREBASE_PRIVATE_KEY_ID=your-private-key-id
+   FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nyour-private-key-here\n-----END PRIVATE KEY-----
+   FIREBASE_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
+   FIREBASE_CLIENT_ID=your-client-id
+   FIREBASE_AUTH_URI=https://accounts.google.com/o/oauth2/auth
+   FIREBASE_TOKEN_URI=https://oauth2.googleapis.com/token
+   
+   # Python Version
    PYTHON_VERSION=3.11.0
    ```
+   
+   **How to get Firebase credentials:**
+   - Go to Firebase Console → Project Settings → Service Accounts
+   - Click "Generate new private key"
+   - Open the JSON file and copy each value to the environment variables above
 
 6. **Deploy** → Wait 5-10 minutes
 7. **Copy your backend URL** (e.g., https://african-nations-league-api.onrender.com)
