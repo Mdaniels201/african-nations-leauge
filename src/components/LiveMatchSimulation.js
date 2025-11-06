@@ -153,6 +153,9 @@ const LiveMatchSimulation = ({ team1, team2, onMatchComplete, onCancel }) => {
               soundManager.playSound('fulltime');
               showSoundIndicator('🎵 Full-time Whistle');
               break;
+            default:
+              // No specific sound for this commentary type
+              break;
           }
         }
         break;
