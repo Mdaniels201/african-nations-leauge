@@ -1303,4 +1303,6 @@ if __name__ == '__main__':
     print("🚀 Starting African Nations League API Server...")
     print(f"🎯 Gemini AI Available: {gemini_model is not None}")
     print(f"📧 Email Notifications: {bool(EMAIL_USER and EMAIL_PASSWORD)}")
-    app.run(debug=True, port=5000)
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
