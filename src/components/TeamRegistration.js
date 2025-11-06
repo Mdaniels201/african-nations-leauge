@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { TeamIcon, RegisterIcon } from './ui/Icons';
+import { RegisterIcon } from './ui/Icons';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 

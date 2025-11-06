@@ -18,7 +18,7 @@
  * @param {Function} onCancel - Callback when user cancels the simulation
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FlagIcon, isoForTeam } from '../utils/flags'; // Flag display utilities
 import { PlayIcon, GoalIcon, ClockIcon } from './ui/Icons'; // UI icons
 import soundManager from '../utils/soundManager'; // Sound effects manager
