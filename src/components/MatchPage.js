@@ -4,6 +4,8 @@ import { FlagIcon, isoForTeam } from '../utils/flags';
 import { TrophyIcon, LightningIcon, PlayIcon, GoalIcon } from './ui/Icons';
 import LiveMatchSimulation from './LiveMatchSimulation';
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
 const MatchPage = ({ bracket, onSimulateMatch, onPlayMatch, loading }) => {
   const navigate = useNavigate();
   const { round, index } = useParams();
@@ -70,12 +72,41 @@ const MatchPage = ({ bracket, onSimulateMatch, onPlayMatch, loading }) => {
     setShowLiveMatch(true);
   };
 
-  const handleLiveMatchComplete = (matchResult) => {
+  const handleLiveMatchComplete = async (matchResult) => {
     setResult(matchResult);
     setShowLiveMatch(false);
-    // Also call the original onSimulateMatch to update the bracket
-    if (onSimulateMatch) {
-      onSimulateMatch(team1.id, team2.id, round);
+    
+    // Save the live match result to the database
+    try {
+      const response = await fetch(`${API_BASE_URL}/matches/save-live-result`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          team1: matchResult.team1,
+          team2: matchResult.team2,
+          team1_goals: matchResult.team1_goals,
+          team2_goals: matchResult.team2_goals,
+          score: matchResult.score,
+          winner: matchResult.winner,
+          goal_scorers: matchResult.goal_scorers,
+          match_type: round
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save live match result');
+      }
+
+      const data = await response.json();
+      console.log('Live match result saved successfully:', data);
+      
+      // Refresh the page to show updated results
+      window.location.reload();
+    } catch (error) {
+      console.error('Error saving live match result:', error);
+      alert('Failed to save live match result. Please try again.');
     }
   };
 

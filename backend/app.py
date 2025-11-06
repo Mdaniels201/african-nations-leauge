@@ -340,24 +340,32 @@ def generate_single_ai_commentary(text_prompt):
             return text_prompt  # Fallback to original text
         
         prompt = f"""
-        You are a professional football commentator for the African Nations League. 
-        Create ONE single line of engaging commentary based on this situation: {text_prompt}
+        You are a professional football commentator. Based on this situation, write ONE single sentence of commentary:
         
-        IMPORTANT RULES:
-        - Use ONLY the exact team names provided (do NOT use nicknames like "Leopards", "Eagles", etc.)
-        - Generate ONLY ONE commentary line (no options, no alternatives)
-        - Keep it to 1-2 sentences maximum
-        - Make it sound natural and exciting like a real sports commentator
-        - Do NOT include any formatting like asterisks, options, or multiple choices
+        {text_prompt}
         
-        Return ONLY the commentary text, nothing else.
+        STRICT RULES:
+        - Write ONLY ONE sentence
+        - Use ONLY the exact team names given (NO nicknames)
+        - NO options, NO alternatives, NO choices
+        - NO asterisks, NO formatting, NO bullet points
+        - Just plain commentary text
+        
+        Example: "What a brilliant pass from the midfielder, splitting the defense wide open!"
         """
         
         response = gemini_model.generate_content(prompt)
         if response and response.text:
             commentary = response.text.strip()
             # Remove any option markers or formatting
-            commentary = commentary.replace('**', '').replace('*', '')
+            commentary = commentary.replace('**', '').replace('*', '').replace('Option', '').replace('option', '')
+            # Remove anything that looks like multiple choices
+            if 'Of course' in commentary or 'here are' in commentary.lower():
+                # If AI is giving options, just use the fallback
+                return text_prompt
+            # Take only the first sentence
+            if '.' in commentary:
+                commentary = commentary.split('.')[0] + '.'
             # Take only the first line if multiple are generated
             commentary = commentary.split('\n')[0]
             return commentary
@@ -755,6 +763,158 @@ def live_stream_match():
             'Access-Control-Allow-Headers': 'Content-Type',
         }
     )
+
+@app.route('/api/matches/save-live-result', methods=['POST'])
+def save_live_match_result():
+    """Save live match result to database"""
+    print("💾 SAVE LIVE MATCH RESULT ENDPOINT CALLED")
+    try:
+        data = request.json
+        print(f"📥 Received live match data: {data}")
+        
+        team1 = data.get('team1', {})
+        team2 = data.get('team2', {})
+        team1_id = team1.get('id')
+        team2_id = team2.get('id')
+        match_type = data.get('match_type', 'quarterFinal')
+        team1_goals = data.get('team1_goals', 0)
+        team2_goals = data.get('team2_goals', 0)
+        score_display = data.get('score', f"{team1_goals}-{team2_goals}")
+        goal_scorers = data.get('goal_scorers', [])
+        winner = data.get('winner')
+        
+        if not team1_id or not team2_id:
+            return jsonify({'error': 'Both team IDs are required'}), 400
+        
+        if not db:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        print(f"🏟️  Saving live match: {team1.get('country')} {team1_goals} - {team2_goals} {team2.get('country')}")
+        
+        # Update bracket in database with match result
+        tournament_doc = db.collection('tournament').document('current').get()
+        if not tournament_doc.exists:
+            return jsonify({'error': 'Tournament not found'}), 404
+        
+        bracket = tournament_doc.to_dict()
+        
+        # Update the appropriate match based on match_type
+        updated = False
+        if match_type == 'quarterFinal':
+            # Find and update quarter final match
+            for i, match in enumerate(bracket.get('quarterFinals', [])):
+                match_team1 = match.get('team1', {})
+                match_team2 = match.get('team2', {})
+                if ((match_team1.get('id') == team1_id or match_team1.get('id') == team2_id) and
+                    (match_team2.get('id') == team1_id or match_team2.get('id') == team2_id)):
+                    bracket['quarterFinals'][i]['winner'] = winner
+                    bracket['quarterFinals'][i]['score'] = score_display
+                    bracket['quarterFinals'][i]['team1_goals'] = team1_goals
+                    bracket['quarterFinals'][i]['team2_goals'] = team2_goals
+                    bracket['quarterFinals'][i]['goal_scorers'] = goal_scorers
+                    bracket['quarterFinals'][i]['commentary'] = ["Live match - commentary generated during broadcast"]
+                    bracket['quarterFinals'][i]['play_by_play'] = True
+                    updated = True
+                    print(f"✅ Updated quarter final match {i}")
+                    break
+            
+            # Auto-advance to semi-finals when each side's two quarter finals finish
+            if updated:
+                qfs = bracket.get('quarterFinals', [])
+                # Left side: QF 0 vs QF 1
+                if len(qfs) >= 2 and qfs[0].get('winner') and qfs[1].get('winner'):
+                    left_sf = bracket.get('semiFinals', [{}, {}])[0] if bracket.get('semiFinals') else {}
+                    bracket.setdefault('semiFinals', [{}, {}])
+                    bracket['semiFinals'][0] = {
+                        'team1': qfs[0]['winner'],
+                        'team2': qfs[1]['winner'],
+                        'winner': left_sf.get('winner'),
+                        'score': left_sf.get('score'),
+                        'goal_scorers': left_sf.get('goal_scorers', []),
+                        'commentary': left_sf.get('commentary', []),
+                        'team1_goals': left_sf.get('team1_goals'),
+                        'team2_goals': left_sf.get('team2_goals'),
+                        'play_by_play': left_sf.get('play_by_play', False)
+                    }
+                # Right side: QF 2 vs QF 3
+                if len(qfs) >= 4 and qfs[2].get('winner') and qfs[3].get('winner'):
+                    right_sf = bracket.get('semiFinals', [{}, {}])[1] if len(bracket.get('semiFinals', [])) > 1 else {}
+                    bracket['semiFinals'][1] = {
+                        'team1': qfs[2]['winner'],
+                        'team2': qfs[3]['winner'],
+                        'winner': right_sf.get('winner'),
+                        'score': right_sf.get('score'),
+                        'goal_scorers': right_sf.get('goal_scorers', []),
+                        'commentary': right_sf.get('commentary', []),
+                        'team1_goals': right_sf.get('team1_goals'),
+                        'team2_goals': right_sf.get('team2_goals'),
+                        'play_by_play': right_sf.get('play_by_play', False)
+                    }
+        
+        elif match_type == 'semiFinal':
+            # Find and update semi final match
+            for i, match in enumerate(bracket.get('semiFinals', [])):
+                match_team1 = match.get('team1', {})
+                match_team2 = match.get('team2', {})
+                if ((match_team1.get('id') == team1_id or match_team1.get('id') == team2_id) and
+                    (match_team2.get('id') == team1_id or match_team2.get('id') == team2_id)):
+                    bracket['semiFinals'][i]['winner'] = winner
+                    bracket['semiFinals'][i]['score'] = score_display
+                    bracket['semiFinals'][i]['team1_goals'] = team1_goals
+                    bracket['semiFinals'][i]['team2_goals'] = team2_goals
+                    bracket['semiFinals'][i]['goal_scorers'] = goal_scorers
+                    bracket['semiFinals'][i]['commentary'] = ["Live match - commentary generated during broadcast"]
+                    bracket['semiFinals'][i]['play_by_play'] = True
+                    updated = True
+                    print(f"✅ Updated semi final match {i}")
+                    break
+            
+            # Auto-advance to final if both semi finals are complete
+            if updated:
+                sf_complete = all(m.get('winner') for m in bracket.get('semiFinals', []))
+                if sf_complete and not bracket.get('final', {}).get('team1'):
+                    # Advance winners to final
+                    winners = [m['winner'] for m in bracket['semiFinals'] if m.get('winner')]
+                    if len(winners) >= 2:
+                        bracket['final'] = {
+                            'team1': winners[0],
+                            'team2': winners[1],
+                            'winner': None,
+                            'score': None,
+                            'goal_scorers': [],
+                            'commentary': []
+                        }
+        
+        elif match_type == 'final':
+            # Update final match
+            final_match = bracket.get('final', {})
+            match_team1 = final_match.get('team1', {})
+            match_team2 = final_match.get('team2', {})
+            if ((match_team1.get('id') == team1_id or match_team1.get('id') == team2_id) and
+                (match_team2.get('id') == team1_id or match_team2.get('id') == team2_id)):
+                bracket['final']['winner'] = winner
+                bracket['final']['score'] = score_display
+                bracket['final']['team1_goals'] = team1_goals
+                bracket['final']['team2_goals'] = team2_goals
+                bracket['final']['goal_scorers'] = goal_scorers
+                bracket['final']['commentary'] = ["Live match - commentary generated during broadcast"]
+                bracket['final']['play_by_play'] = True
+                updated = True
+                print(f"✅ Updated final match")
+                # Mark tournament as completed
+                bracket['status'] = 'completed'
+        
+        # Save updated bracket
+        if updated:
+            db.collection('tournament').document('current').set(bracket)
+            print(f"💾 Bracket saved successfully")
+            return jsonify({'message': 'Live match result saved successfully', 'bracket': bracket}), 200
+        else:
+            return jsonify({'error': 'Match not found in bracket'}), 404
+            
+    except Exception as e:
+        print(f"🔴 Error in save_live_match_result: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/matches/simulate', methods=['POST'])
 def simulate_match():
