@@ -112,13 +112,13 @@ class SoundManager {
         return;
       }
       
-      console.log(`Loading ${soundName}: ${nextSrc}`);
+      // Loading sound
       audio.src = nextSrc;
     };
     
     // Handle successful load
     audio.addEventListener('canplaythrough', () => {
-      console.log(`✅ Successfully loaded ${soundName}: ${audio.src}`);
+      // Successfully loaded sound
     });
     
     // Handle load errors - try next fallback
@@ -378,7 +378,7 @@ class SoundManager {
 
   stopAmbient() {
     // No ambient sounds to stop anymore
-    console.log('No ambient sounds in use');
+    // No ambient sounds in use
   }
 
   // Fallback to synthetic sounds if files fail

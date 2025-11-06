@@ -118,7 +118,7 @@ const LiveMatchSimulation = ({ team1, team2, onMatchComplete, onCancel }) => {
   const handleStreamEvent = (data) => {
     switch (data.type) {
       case 'match_start':
-        console.log('Match started:', data);
+        // Match started
         break;
         
       case 'time_update':
@@ -188,7 +188,7 @@ const LiveMatchSimulation = ({ team1, team2, onMatchComplete, onCancel }) => {
         break;
         
       default:
-        console.log('Unknown event type:', data.type);
+        // Unknown event type
     }
   };
 
