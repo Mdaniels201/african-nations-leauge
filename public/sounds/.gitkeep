@@ -1,0 +1,9 @@
+# This file keeps the sounds folder in git
+# Add your sound files here:
+# - goal-celebration.wav (required)
+# - whistle-short.wav (required)
+# - whistle-long.wav (required)
+# - whistle-triple.wav (optional)
+# - crowd-cheer.wav (optional)
+#
+# Note: .mp3 files also work as fallbacks
