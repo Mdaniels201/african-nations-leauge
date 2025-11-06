@@ -1,26 +1,26 @@
 {
-  "name": "african-nations-league",
   "version": 2,
   "builds": [
     {
+      "src": "backend/app.py",
+      "use": "@vercel/python"
+    },
+    {
       "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/static/(.*)",
-      "headers": {
-        "cache-control": "s-maxage=31536000,immutable"
-      },
-      "dest": "/static/$1"
+      "src": "/api/(.*)",
+      "dest": "backend/app.py"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/$1"
     }
-  ]
+  ],
+  "env": {
+    "FLASK_APP": "app.py"
+  }
 }
