@@ -59,14 +59,26 @@ CORS(app, origins=[
 
 # Initialize Firebase Admin SDK for database operations
 try:
-    # Try to get Firebase credentials from environment variable first
-    firebase_creds = os.getenv('FIREBASE_CREDENTIALS')
-    if firebase_creds:
-        # Use credentials from environment variable
-        import json
-        cred_dict = json.loads(firebase_creds)
+    # Try to get Firebase credentials from individual environment variables
+    firebase_type = os.getenv('FIREBASE_TYPE')
+    firebase_project_id = os.getenv('FIREBASE_PROJECT_ID')
+    firebase_private_key = os.getenv('FIREBASE_PRIVATE_KEY')
+    firebase_client_email = os.getenv('FIREBASE_CLIENT_EMAIL')
+    
+    if all([firebase_type, firebase_project_id, firebase_private_key, firebase_client_email]):
+        # Build credentials dict from environment variables
+        cred_dict = {
+            "type": firebase_type,
+            "project_id": firebase_project_id,
+            "private_key_id": os.getenv('FIREBASE_PRIVATE_KEY_ID'),
+            "private_key": firebase_private_key.replace('\\n', '\n'),
+            "client_email": firebase_client_email,
+            "client_id": os.getenv('FIREBASE_CLIENT_ID'),
+            "auth_uri": os.getenv('FIREBASE_AUTH_URI'),
+            "token_uri": os.getenv('FIREBASE_TOKEN_URI')
+        }
         cred = credentials.Certificate(cred_dict)
-        print("🔑 Using Firebase credentials from environment variable")
+        print("🔑 Using Firebase credentials from environment variables")
     elif os.path.exists('firebase-credentials.json'):
         # Use service account file for local development
         cred = credentials.Certificate('firebase-credentials.json')
