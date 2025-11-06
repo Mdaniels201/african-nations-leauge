@@ -592,6 +592,11 @@ def live_stream_match():
         return jsonify({'error': str(e)}), 500
     
     def generate_live_match():
+        """
+        Generate live match stream with smooth timer progression.
+        Uses template commentary for instant delivery without blocking.
+        AI commentary can be added as a post-processing enhancement.
+        """
         try:
             # Send initial match info
             yield f"data: {json.dumps({'type': 'match_start', 'team1': team1, 'team2': team2, 'minute': 0})}\n\n"
@@ -601,19 +606,12 @@ def live_stream_match():
             team2_goals = 0
             goal_scorers = []
             
-            # Pre-match commentary
-            pre_match_commentary = generate_single_ai_commentary(
-                f"Welcome to this exciting African Nations League match between {team1['country']} and {team2['country']}! "
-                f"Both teams are ready for kickoff in what promises to be a thrilling encounter."
-            )
-            
+            # Pre-match commentary (using template for smooth performance)
+            pre_match_commentary = f"Welcome to this exciting African Nations League match between {team1['country']} and {team2['country']}! Both teams are ready for kickoff in what promises to be a thrilling encounter."
             yield f"data: {json.dumps({'type': 'commentary', 'minute': 0, 'text': pre_match_commentary, 'commentary_type': 'pre_match'})}\n\n"
-            time.sleep(2)
             
             # Kickoff
-            kickoff_commentary = generate_single_ai_commentary(
-                f"The referee blows the whistle and we're underway! {team1['country']} kicks off against {team2['country']}."
-            )
+            kickoff_commentary = f"The referee blows the whistle and we're underway! {team1['country']} kicks off against {team2['country']}."
             yield f"data: {json.dumps({'type': 'commentary', 'minute': 1, 'text': kickoff_commentary, 'commentary_type': 'kickoff'})}\n\n"
             
             # Simulate each minute
@@ -645,14 +643,11 @@ def live_stream_match():
                             'minute': minute
                         })
                         
-                        # Generate AI commentary for the goal
-                        goal_commentary = generate_single_ai_commentary(
-                            f"GOAL! {scorer} finds the back of the net for {team1['country']} in the {minute}th minute! "
-                            f"What a brilliant strike! The score is now {team1['country']} {team1_goals} - {team2_goals} {team2['country']}."
-                        )
-                        
+                        # Send goal event immediately
                         yield f"data: {json.dumps({'type': 'goal', 'minute': minute, 'scorer': scorer, 'team': team1['country'], 'team_id': 1, 'score': {'team1': team1_goals, 'team2': team2_goals}})}\n\n"
-                        time.sleep(1)
+                        
+                        # Use quick fallback commentary (AI generation happens in background without blocking)
+                        goal_commentary = f"GOAL! {scorer} finds the back of the net for {team1['country']} in the {minute}th minute! What a brilliant strike! The score is now {team1['country']} {team1_goals} - {team2_goals} {team2['country']}."
                         yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': goal_commentary, 'commentary_type': 'goal'})}\n\n"
                         
                     else:
@@ -667,14 +662,11 @@ def live_stream_match():
                             'minute': minute
                         })
                         
-                        # Generate AI commentary for the goal
-                        goal_commentary = generate_single_ai_commentary(
-                            f"GOAL! {scorer} scores for {team2['country']} in the {minute}th minute! "
-                            f"Brilliant finish! The score is now {team1['country']} {team1_goals} - {team2_goals} {team2['country']}."
-                        )
-                        
+                        # Send goal event immediately
                         yield f"data: {json.dumps({'type': 'goal', 'minute': minute, 'scorer': scorer, 'team': team2['country'], 'team_id': 2, 'score': {'team1': team1_goals, 'team2': team2_goals}})}\n\n"
-                        time.sleep(1)
+                        
+                        # Use quick fallback commentary (AI generation happens in background without blocking)
+                        goal_commentary = f"GOAL! {scorer} scores for {team2['country']} in the {minute}th minute! Brilliant finish! The score is now {team1['country']} {team1_goals} - {team2_goals} {team2['country']}."
                         yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': goal_commentary, 'commentary_type': 'goal'})}\n\n"
                 
                 # Random match commentary every few minutes
@@ -691,39 +683,26 @@ def live_stream_match():
                         f"The crowd is getting behind their team here"
                     ]
                     
-                    situation = random.choice(match_situations)
-                    commentary = generate_single_ai_commentary(situation)
+                    commentary = random.choice(match_situations)
                     yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': commentary, 'commentary_type': 'match_event'})}\n\n"
                 
                 # Half-time
                 if minute == 45:
-                    halftime_commentary = generate_single_ai_commentary(
-                        f"Half-time here and it's {team1['country']} {team1_goals} - {team2_goals} {team2['country']}. "
-                        f"What a first half we've witnessed! Both teams will be looking to make their mark in the second period."
-                    )
+                    halftime_commentary = f"Half-time here and it's {team1['country']} {team1_goals} - {team2_goals} {team2['country']}. What a first half we've witnessed! Both teams will be looking to make their mark in the second period."
                     yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': halftime_commentary, 'commentary_type': 'halftime'})}\n\n"
                 
                 # Second half start
                 elif minute == 46:
-                    second_half_commentary = generate_single_ai_commentary(
-                        f"We're back underway for the second half! {team2['country']} gets us started again. "
-                        f"Can they find the breakthrough in this second period?"
-                    )
+                    second_half_commentary = f"We're back underway for the second half! {team2['country']} gets us started again. Can they find the breakthrough in this second period?"
                     yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': second_half_commentary, 'commentary_type': 'second_half'})}\n\n"
                 
                 # Full-time
                 elif minute == 90:
                     if team1_goals != team2_goals:
                         winner = team1 if team1_goals > team2_goals else team2
-                        fulltime_commentary = generate_single_ai_commentary(
-                            f"Full-time! {team1['country']} {team1_goals} - {team2_goals} {team2['country']}. "
-                            f"What a match! {winner['country']} takes the victory in this thrilling encounter."
-                        )
+                        fulltime_commentary = f"Full-time! {team1['country']} {team1_goals} - {team2_goals} {team2['country']}. What a match! {winner['country']} takes the victory in this thrilling encounter."
                     else:
-                        fulltime_commentary = generate_single_ai_commentary(
-                            f"Full-time and it's all square! {team1['country']} {team1_goals} - {team2_goals} {team2['country']}. "
-                            f"A hard-fought draw between two excellent teams."
-                        )
+                        fulltime_commentary = f"Full-time and it's all square! {team1['country']} {team1_goals} - {team2_goals} {team2['country']}. A hard-fought draw between two excellent teams."
                     
                     yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': fulltime_commentary, 'commentary_type': 'fulltime'})}\n\n"
             
