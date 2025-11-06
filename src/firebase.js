@@ -3,12 +3,12 @@ import { getFirestore } from 'firebase/firestore';
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "your-sender-id",
-  appId: "your-app-id"
+  apiKey: "AIzaSyDC0V_Ohrgms1GLbHERl8cKla4nsRBhUM0",
+  authDomain: "africannationsleague.firebaseapp.com",
+  projectId: "africannationsleague",
+  storageBucket: "africannationsleague.appspot.com",
+  messagingSenderId: "100706818285476151154",
+  appId: "1:100706818285476151154:web:africannationsleague"
 };
 
 // Initialize Firebase
