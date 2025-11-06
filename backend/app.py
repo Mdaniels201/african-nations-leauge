@@ -341,15 +341,26 @@ def generate_single_ai_commentary(text_prompt):
         
         prompt = f"""
         You are a professional football commentator for the African Nations League. 
-        Create engaging, exciting commentary based on this situation: {text_prompt}
+        Create ONE single line of engaging commentary based on this situation: {text_prompt}
         
-        Keep it to 1-2 sentences maximum. Make it sound natural and exciting like a real sports commentator.
-        Use African football terminology and show enthusiasm for the beautiful game.
+        IMPORTANT RULES:
+        - Use ONLY the exact team names provided (do NOT use nicknames like "Leopards", "Eagles", etc.)
+        - Generate ONLY ONE commentary line (no options, no alternatives)
+        - Keep it to 1-2 sentences maximum
+        - Make it sound natural and exciting like a real sports commentator
+        - Do NOT include any formatting like asterisks, options, or multiple choices
+        
+        Return ONLY the commentary text, nothing else.
         """
         
         response = gemini_model.generate_content(prompt)
         if response and response.text:
-            return response.text.strip()
+            commentary = response.text.strip()
+            # Remove any option markers or formatting
+            commentary = commentary.replace('**', '').replace('*', '')
+            # Take only the first line if multiple are generated
+            commentary = commentary.split('\n')[0]
+            return commentary
         else:
             return text_prompt
             
