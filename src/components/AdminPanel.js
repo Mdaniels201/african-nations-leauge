@@ -45,7 +45,10 @@ const AdminPanel = ({
     username: '',
     password: ''
   });
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Check localStorage for existing authentication on mount
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('adminAuthenticated') === 'true';
+  });
   const [error, setError] = useState('');
   const [showLiveMatch, setShowLiveMatch] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState(null);
@@ -54,6 +57,7 @@ const AdminPanel = ({
     e.preventDefault();
     if (adminCredentials.username === 'admin' && adminCredentials.password === 'admin123') {
       setIsAuthenticated(true);
+      localStorage.setItem('adminAuthenticated', 'true');
       setError('');
     } else {
       setError('Invalid credentials');
@@ -62,6 +66,7 @@ const AdminPanel = ({
 
   const handleLogout = () => {
     setIsAuthenticated(false);
+    localStorage.removeItem('adminAuthenticated');
     setAdminCredentials({ username: '', password: '' });
   };
 
