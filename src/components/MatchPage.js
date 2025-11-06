@@ -3,8 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { FlagIcon, isoForTeam } from '../utils/flags';
 import { TrophyIcon, LightningIcon, PlayIcon, GoalIcon } from './ui/Icons';
 import LiveMatchSimulation from './LiveMatchSimulation';
-
-const API_BASE_URL = 'http://localhost:5000/api';
+import API_BASE_URL from '../config'; // API configuration
 
 const MatchPage = ({ bracket, onSimulateMatch, onPlayMatch, loading }) => {
   const navigate = useNavigate();

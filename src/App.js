@@ -46,8 +46,7 @@ import Notification from './components/ui/Notification';
 // API CONFIGURATION
 // ============================================================================
 
-// Base URL for backend API - automatically switches between development and production
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+import API_BASE_URL from './config'; // API configuration (auto-switches dev/prod)
 
 /**
  * Main Application Component

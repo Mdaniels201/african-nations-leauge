@@ -30,8 +30,7 @@ import { Link } from 'react-router-dom'; // For navigation links
 import { AdminIcon } from './ui/Icons'; // Admin interface icons
 import { FlagIcon, isoForTeam } from '../utils/flags'; // Flag display utilities
 import LiveMatchSimulation from './LiveMatchSimulation'; // Live match simulation component
-
-const API_BASE_URL = 'http://localhost:5000/api';
+import API_BASE_URL from '../config'; // API configuration
 
 const AdminPanel = ({ 
   teams, 

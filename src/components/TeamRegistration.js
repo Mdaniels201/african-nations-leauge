@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { RegisterIcon } from './ui/Icons';
-
-const API_BASE_URL = 'http://localhost:5000/api';
+import API_BASE_URL from '../config'; // API configuration
 
 const TeamRegistration = ({ onTeamRegistered, loading }) => {
   const [formData, setFormData] = useState({

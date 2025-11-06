@@ -22,9 +22,7 @@ import React, { useState, useEffect } from 'react';
 import { FlagIcon, isoForTeam } from '../utils/flags'; // Flag display utilities
 import { PlayIcon, GoalIcon, ClockIcon } from './ui/Icons'; // UI icons
 import soundManager from '../utils/soundManager'; // Sound effects manager
-
-// API endpoint for live match streaming
-const API_BASE_URL = 'http://localhost:5000/api';
+import API_BASE_URL from '../config'; // API configuration
 
 const LiveMatchSimulation = ({ team1, team2, onMatchComplete, onCancel }) => {
   // ============================================================================

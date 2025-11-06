@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { GoalIcon, TeamIcon, AnalyticsIcon } from './ui/Icons';
 import { FlagIcon, isoForTeam } from '../utils/flags';
-
-const API_BASE_URL = 'http://localhost:5000/api';
+import API_BASE_URL from '../config';
 
 const GoalScorers = () => {
   const [goalScorers, setGoalScorers] = useState([]);
