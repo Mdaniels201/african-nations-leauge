@@ -618,7 +618,10 @@ def live_stream_match():
             
             # Simulate each minute
             for minute in range(1, 94):  # 90 minutes + injury time
-                time.sleep(0.5)  # 0.5 seconds per minute for faster demo
+                time.sleep(0.2)  # 0.2 seconds per minute for faster demo (prevents timeout)
+                
+                # Send keep-alive ping to prevent connection timeout
+                yield f": keepalive\n\n"
                 
                 yield f"data: {json.dumps({'type': 'time_update', 'minute': minute})}\n\n"
                 
@@ -740,6 +743,7 @@ def live_stream_match():
         headers={
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no',  # Disable buffering for nginx/proxy
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': 'Content-Type',
         }
