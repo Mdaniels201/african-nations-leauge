@@ -375,12 +375,12 @@ def generate_single_ai_commentary(text_prompt):
             return text_prompt
             
     except Exception as e:
-        print(f"🔴 Error generating single AI commentary: {e}")
+        print(f"Error generating single AI commentary: {e}")
         return text_prompt
 
 def generate_template_commentary(team1, team2, score1, score2, goal_scorers):
     """Fallback template-based commentary"""
-    print("🔴 USING TEMPLATE COMMENTARY")
+    print("USING TEMPLATE COMMENTARY")
     commentary = []
     
     # Match start
@@ -560,7 +560,7 @@ def play_match():
 @app.route('/api/matches/live-stream', methods=['POST'])
 def live_stream_match():
     """Stream a live match with real-time AI commentary"""
-    print("🔴 LIVE STREAM MATCH ENDPOINT CALLED")
+    print("LIVE STREAM MATCH ENDPOINT CALLED")
     
     try:
         # Get request data first, before creating the generator
@@ -590,7 +590,7 @@ def live_stream_match():
         print(f"🏟️ Starting live stream: {team1['country']} vs {team2['country']}")
         
     except Exception as e:
-        print(f"🔴 Error setting up live stream: {e}")
+        print(f"Error setting up live stream: {e}")
         return jsonify({'error': str(e)}), 500
     
     def generate_live_match():
@@ -734,7 +734,7 @@ def live_stream_match():
             yield f"data: {json.dumps(final_result)}\n\n"
             
         except Exception as e:
-            print(f"🔴 Error in live stream generator: {e}")
+            print(f"Error in live stream generator: {e}")
             yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
     
     return Response(
@@ -752,10 +752,10 @@ def live_stream_match():
 @app.route('/api/matches/save-live-result', methods=['POST'])
 def save_live_match_result():
     """Save live match result to database"""
-    print("💾 SAVE LIVE MATCH RESULT ENDPOINT CALLED")
+    print("SAVE LIVE MATCH RESULT ENDPOINT CALLED")
     try:
         data = request.json
-        print(f"📥 Received live match data: {data}")
+        print(f" Received live match data: {data}")
         
         team1 = data.get('team1', {})
         team2 = data.get('team2', {})
@@ -885,20 +885,20 @@ def save_live_match_result():
                 bracket['final']['commentary'] = ["Live match - commentary generated during broadcast"]
                 bracket['final']['play_by_play'] = True
                 updated = True
-                print(f"✅ Updated final match")
+                print(f"Updated final match")
                 # Mark tournament as completed
                 bracket['status'] = 'completed'
         
         # Save updated bracket
         if updated:
             db.collection('tournament').document('current').set(bracket)
-            print(f"💾 Bracket saved successfully")
+            print(f"Bracket saved successfully")
             return jsonify({'message': 'Live match result saved successfully', 'bracket': bracket}), 200
         else:
             return jsonify({'error': 'Match not found in bracket'}), 404
             
     except Exception as e:
-        print(f"🔴 Error in save_live_match_result: {e}")
+        print(f"Error in save_live_match_result: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/matches/simulate', methods=['POST'])
@@ -911,8 +911,8 @@ def simulate_match_internal(play_by_play=False):
     """Internal function to simulate matches with or without commentary"""
     try:
         data = request.json
-        print(f"📥 Received request: {data}")
-        print(f"🎯 Play by play mode: {play_by_play}")
+        print(f"Received request: {data}")
+        print(f"Play by play mode: {play_by_play}")
         
         team1_id = data.get('team1_id')
         team2_id = data.get('team2_id')
@@ -936,8 +936,8 @@ def simulate_match_internal(play_by_play=False):
         team1['id'] = team1_id
         team2['id'] = team2_id
         
-        print(f"🏟️  Match: {team1['country']} vs {team2['country']}")
-        print(f"🎯 Commentary requested: {play_by_play}")
+        print(f"Match: {team1['country']} vs {team2['country']}")
+        print(f"Commentary requested: {play_by_play}")
         
         # Simulate match based on team ratings
         team1_rating = team1.get('rating', 50)
@@ -1047,11 +1047,11 @@ def simulate_match_internal(play_by_play=False):
         # Generate commentary based on play_by_play flag
         commentary = []
         if play_by_play:
-            print("🟢 GENERATING AI COMMENTARY - Play by play mode is ON")
+            print("GENERATING AI COMMENTARY - Play by play mode is ON")
             commentary = generate_ai_commentary(team1, team2, team1_goals, team2_goals, goal_scorers)
-            print(f"🟢 COMMENTARY RESULT: {len(commentary)} lines generated")
+            print(f"COMMENTARY RESULT: {len(commentary)} lines generated")
         else:
-            print("🔴 SKIPPING COMMENTARY - Play by play mode is OFF")
+            print("SKIPPING COMMENTARY - Play by play mode is OFF")
             commentary = ["Match was simulated - no commentary available"]
         
         match_result = {
@@ -1183,7 +1183,7 @@ def simulate_match_internal(play_by_play=False):
                         db.collection('tournament').document('current').set(bracket)
                     
             except Exception as e:
-                print(f"🔴 Error updating bracket: {e}")
+                print(f"Error updating bracket: {e}")
         
         # Send email notifications (only if configured)
         if EMAIL_USER and EMAIL_PASSWORD:
@@ -1212,15 +1212,15 @@ Goal Scorers:
                 send_email(team1.get('email', ''), email_subject, email_body)
                 send_email(team2.get('email', ''), email_subject, email_body)
             except Exception as e:
-                print(f"🔴 Email notification error: {e}")
+                print(f"Email notification error: {e}")
         else:
-            print("🔴 Email not configured - skipping email notifications")
+            print("Email not configured - skipping email notifications")
         
-        print(f"🟢 Match simulation completed: {score_display}")
+        print(f"Match simulation completed: {score_display}")
         return jsonify({'match_result': match_result}), 200
         
     except Exception as e:
-        print(f"🔴 Error in simulate_match_internal: {e}")
+        print(f"Error in simulate_match_internal: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/tournament/reset', methods=['POST'])
@@ -1466,11 +1466,11 @@ if __name__ == '__main__':
     required_env_vars = ['GEMINI_API_KEY']
     missing_vars = [var for var in required_env_vars if not os.getenv(var)]
     if missing_vars:
-        print(f"🔴 Warning: Missing environment variables: {missing_vars}")
+        print(f"Warning: Missing environment variables: {missing_vars}")
     
-    print("🚀 Starting African Nations League API Server...")
-    print(f"🎯 Gemini AI Available: {gemini_model is not None}")
-    print(f"📧 Email Notifications: {bool(EMAIL_USER and EMAIL_PASSWORD)}")
+    print("Starting African Nations League API Server...")
+    print(f"Gemini AI Available: {gemini_model is not None}")
+    print(f"Email Notifications: {bool(EMAIL_USER and EMAIL_PASSWORD)}")
     import os
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host='0.0.0.0', port=port)
