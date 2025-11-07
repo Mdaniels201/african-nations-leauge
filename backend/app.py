@@ -706,28 +706,119 @@ def live_stream_match():
                     if team1_goals != team2_goals:
                         winner = team1 if team1_goals > team2_goals else team2
                         fulltime_commentary = f"Full-time! {team1['country']} {team1_goals} - {team2_goals} {team2['country']}. What a match! {winner['country']} takes the victory in this thrilling encounter."
+                        yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': fulltime_commentary, 'commentary_type': 'fulltime'})}\n\n"
                     else:
-                        fulltime_commentary = f"Full-time and it's all square! {team1['country']} {team1_goals} - {team2_goals} {team2['country']}. A hard-fought draw between two excellent teams."
-                    
-                    yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': fulltime_commentary, 'commentary_type': 'fulltime'})}\n\n"
+                        fulltime_commentary = f"Full-time and it's all square! {team1['country']} {team1_goals} - {team2_goals} {team2['country']}. We're heading to extra time!"
+                        yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': fulltime_commentary, 'commentary_type': 'fulltime'})}\n\n"
             
-            # Determine winner
-            winner = None
-            if team1_goals > team2_goals:
-                winner = team1
-            elif team2_goals > team1_goals:
-                winner = team2
+            # Extra time if draw (for knockout matches)
+            penalties = None
+            if team1_goals == team2_goals and match_type != 'group':
+                # Extra time commentary
+                extra_time_start = f"Extra time begins! Both teams have 30 more minutes to find a winner."
+                yield f"data: {json.dumps({'type': 'commentary', 'minute': 91, 'text': extra_time_start, 'commentary_type': 'extra_time'})}\n\n"
+                
+                # Simulate extra time (30 minutes)
+                for minute in range(91, 121):
+                    time.sleep(0.2)
+                    yield f": keepalive\n\n"
+                    yield f"data: {json.dumps({'type': 'time_update', 'minute': minute})}\n\n"
+                    
+                    # Higher goal chance in extra time
+                    if random.random() < 0.04:
+                        team1_rating = team1.get('rating', 50)
+                        team2_rating = team2.get('rating', 50)
+                        total_rating = team1_rating + team2_rating
+                        team1_prob = team1_rating / total_rating
+                        
+                        if random.random() < team1_prob:
+                            team1_goals += 1
+                            attacking_players = [p for p in team1['players'] if p.get('naturalPosition') in ['AT', 'MD']]
+                            scorer = random.choice(attacking_players)['name'] if attacking_players else random.choice(team1['players'])['name']
+                            goal_scorers.append({'scorer': scorer, 'team': team1['country'], 'minute': minute})
+                            
+                            yield f"data: {json.dumps({'type': 'goal', 'minute': minute, 'scorer': scorer, 'team': team1['country'], 'team_id': 1, 'score': {'team1': team1_goals, 'team2': team2_goals}})}\n\n"
+                            goal_commentary = f"GOAL in extra time! {scorer} scores for {team1['country']}! The score is now {team1_goals}-{team2_goals}!"
+                            yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': goal_commentary, 'commentary_type': 'goal'})}\n\n"
+                        else:
+                            team2_goals += 1
+                            attacking_players = [p for p in team2['players'] if p.get('naturalPosition') in ['AT', 'MD']]
+                            scorer = random.choice(attacking_players)['name'] if attacking_players else random.choice(team2['players'])['name']
+                            goal_scorers.append({'scorer': scorer, 'team': team2['country'], 'minute': minute})
+                            
+                            yield f"data: {json.dumps({'type': 'goal', 'minute': minute, 'scorer': scorer, 'team': team2['country'], 'team_id': 2, 'score': {'team1': team1_goals, 'team2': team2_goals}})}\n\n"
+                            goal_commentary = f"GOAL in extra time! {scorer} scores for {team2['country']}! The score is now {team1_goals}-{team2_goals}!"
+                            yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': goal_commentary, 'commentary_type': 'goal'})}\n\n"
+                
+                # Penalties if still tied
+                if team1_goals == team2_goals:
+                    penalties_commentary = f"Extra time ends {team1_goals}-{team2_goals}. We're going to penalties!"
+                    yield f"data: {json.dumps({'type': 'commentary', 'minute': 120, 'text': penalties_commentary, 'commentary_type': 'penalties_start'})}\n\n"
+                    
+                    team1_penalties = 0
+                    team2_penalties = 0
+                    
+                    # Simulate 5 penalties each
+                    for i in range(5):
+                        time.sleep(0.5)
+                        if random.random() < 0.75:
+                            team1_penalties += 1
+                            yield f"data: {json.dumps({'type': 'penalty', 'team': team1['country'], 'scored': True, 'penalties': {'team1': team1_penalties, 'team2': team2_penalties}})}\n\n"
+                        else:
+                            yield f"data: {json.dumps({'type': 'penalty', 'team': team1['country'], 'scored': False, 'penalties': {'team1': team1_penalties, 'team2': team2_penalties}})}\n\n"
+                        
+                        time.sleep(0.5)
+                        if random.random() < 0.75:
+                            team2_penalties += 1
+                            yield f"data: {json.dumps({'type': 'penalty', 'team': team2['country'], 'scored': True, 'penalties': {'team1': team1_penalties, 'team2': team2_penalties}})}\n\n"
+                        else:
+                            yield f"data: {json.dumps({'type': 'penalty', 'team': team2['country'], 'scored': False, 'penalties': {'team1': team1_penalties, 'team2': team2_penalties}})}\n\n"
+                    
+                    # Sudden death if tied
+                    round_num = 6
+                    while team1_penalties == team2_penalties:
+                        time.sleep(0.5)
+                        team1_scores = random.random() < 0.75
+                        if team1_scores:
+                            team1_penalties += 1
+                        yield f"data: {json.dumps({'type': 'penalty', 'team': team1['country'], 'scored': team1_scores, 'penalties': {'team1': team1_penalties, 'team2': team2_penalties}, 'sudden_death': True})}\n\n"
+                        
+                        time.sleep(0.5)
+                        team2_scores = random.random() < 0.75
+                        if team2_scores:
+                            team2_penalties += 1
+                        yield f"data: {json.dumps({'type': 'penalty', 'team': team2['country'], 'scored': team2_scores, 'penalties': {'team1': team1_penalties, 'team2': team2_penalties}, 'sudden_death': True})}\n\n"
+                        
+                        round_num += 1
+                        if round_num > 15:  # Safety limit
+                            break
+                    
+                    penalties = {'team1': team1_penalties, 'team2': team2_penalties}
+                    winner = team1 if team1_penalties > team2_penalties else team2
+                    score_display = f"{team1_goals}-{team2_goals} ({team1_penalties}-{team2_penalties} pens)"
+                else:
+                    winner = team1 if team1_goals > team2_goals else team2
+                    score_display = f"{team1_goals}-{team2_goals} (AET)"
+            else:
+                # Determine winner
+                winner = None
+                if team1_goals > team2_goals:
+                    winner = team1
+                elif team2_goals > team1_goals:
+                    winner = team2
+                score_display = f"{team1_goals}-{team2_goals}"
             
             # Send final result
             final_result = {
                 'type': 'match_complete',
                 'team1': team1,
                 'team2': team2,
-                'score': f"{team1_goals}-{team2_goals}",
+                'score': score_display,
                 'team1_goals': team1_goals,
                 'team2_goals': team2_goals,
                 'winner': winner,
                 'goal_scorers': goal_scorers,
+                'penalties': penalties,
                 'play_by_play': True
             }
             
