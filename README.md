@@ -22,7 +22,7 @@ Prereqs:
 - Firebase project with Firestore (or run without data)
 - Optional: Gemini API key for AI features
 
-### 1) Backend
+### 1 Backend
 
 Install:
 
@@ -47,7 +47,7 @@ python backend/app.py
 # http://localhost:5000
 ```
 
-### 2) Frontend
+### 2 Frontend
 
 From `frontend/`:
 
