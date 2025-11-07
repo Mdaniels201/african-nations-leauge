@@ -212,6 +212,15 @@ def send_email(to_email, subject, body):
         print(f"🔴 Check your EMAIL_USER and EMAIL_PASSWORD in .env file")
         return False
 
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for uptime monitoring"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'service': 'African Nations League API'
+    }), 200
+
 @app.route('/api/test-email', methods=['POST'])
 def test_email():
     """Test email configuration"""
