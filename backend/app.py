@@ -47,13 +47,10 @@ app = Flask(__name__)
 # Enable Cross-Origin Resource Sharing (CORS) to allow frontend requests
 # This is necessary for React frontend to communicate with Flask backend
 # Configure CORS for both development and production
+# Allow all origins temporarily for deployment debugging
 CORS(app, 
-     origins=[
-         "http://localhost:3000",  # Local development
-         "https://*.vercel.app"   # Vercel deployment
-         
-     ],
-     supports_credentials=True,
+     resources={r"/api/*": {"origins": "*"}},
+     supports_credentials=False,
      allow_headers=["Content-Type", "Authorization"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 )
