@@ -63,16 +63,9 @@ const LiveMatchSimulation = ({ team1, team2, onMatchComplete, onCancel }) => {
   }, [soundEnabled]);
 
   const connectToLiveStream = async () => {
-    let streamTimeout;
     try {
       setError(null);
       setIsPlaying(true);
-      
-      // Set stream timeout (15 minutes max)
-      streamTimeout = setTimeout(() => {
-        setError('Stream connection timeout - match took too long');
-        setIsPlaying(false);
-      }, 15 * 60 * 1000);
       
       // Create the streaming request
       const response = await fetch(`${API_BASE_URL}/matches/live-stream`, {
@@ -88,7 +81,7 @@ const LiveMatchSimulation = ({ team1, team2, onMatchComplete, onCancel }) => {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to start live stream: ${response.statusText}`);
+        throw new Error('Failed to start live stream');
       }
 
       const reader = response.body.getReader();
@@ -97,53 +90,27 @@ const LiveMatchSimulation = ({ team1, team2, onMatchComplete, onCancel }) => {
 
       while (true) {
         const { done, value } = await reader.read();
+        if (done) break;
         
-        if (done) {
-          // Process any remaining data in buffer
-          if (buffer.trim()) {
-            const lines = buffer.split('\n');
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                try {
-                  const data = JSON.parse(line.slice(6));
-                  handleStreamEvent(data);
-                } catch (e) {
-                  console.error('Error parsing stream data:', e, 'Line:', line);
-                }
-              }
-            }
-          }
-          break;
-        }
-        
-        // Add chunk to buffer
         buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split('\n\n');
+        buffer = chunks.pop();
         
-        // Process complete lines
-        const lines = buffer.split('\n');
-        // Keep the last incomplete line in the buffer
-        buffer = lines[lines.length - 1];
-        
-        for (let i = 0; i < lines.length - 1; i++) {
-          const line = lines[i];
+        for (const chunk of chunks) {
+          const line = chunk.trim();
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
               handleStreamEvent(data);
             } catch (e) {
-              console.error('Error parsing stream data:', e, 'Line:', line);
+              console.error('Error parsing stream data:', e);
             }
-          } else if (line.trim() === '') {
-            // Keep-alive line
           }
         }
       }
-      
-      clearTimeout(streamTimeout);
     } catch (error) {
-      clearTimeout(streamTimeout);
       console.error('Stream error:', error);
-      setError(`Connection error: ${error.message || 'Failed to connect to live match stream'}`);
+      setError('Failed to connect to live match stream');
       setIsPlaying(false);
     }
   };

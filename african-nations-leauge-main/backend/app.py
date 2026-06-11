@@ -44,16 +44,16 @@ load_dotenv()
 # Initialize Flask application
 app = Flask(__name__)
 
-# Enable Cross-Origin Resource Sharing (CORS) to allow frontend requests
-# This is necessary for React frontend to communicate with Flask backend
-# Configure CORS for both development and production
-# Allow all origins temporarily for deployment debugging
-CORS(app, 
-     resources={r"/api/*": {"origins": "*"}},
-     supports_credentials=False,
-     allow_headers=["Content-Type", "Authorization"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-)
+# Enable Cross-Origin Resource Sharing (CORS)
+CORS(app)
+
+# Force CORS headers on EVERY response, including 500 errors
+@app.after_request
+def add_cors_headers(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS')
+    return response
 
 # ============================================================================
 # FIREBASE CONFIGURATION
@@ -890,28 +890,12 @@ def save_live_match_result():
             for i, match in enumerate(bracket.get('quarterFinals', [])):
                 match_team1 = match.get('team1', {})
                 match_team2 = match.get('team2', {})
-                match_team1_id = match_team1.get('id')
-                match_team2_id = match_team2.get('id')
-                
-                # Check if this is the correct match (teams must match, regardless of order)
-                teams_match = (
-                    (match_team1_id == team1_id and match_team2_id == team2_id) or
-                    (match_team1_id == team2_id and match_team2_id == team1_id)
-                )
-                
-                if teams_match:
-                    # Determine which team is which to assign goals correctly
-                    if match_team1_id == team1_id:
-                        # Teams match the expected order
-                        bracket['quarterFinals'][i]['team1_goals'] = team1_goals
-                        bracket['quarterFinals'][i]['team2_goals'] = team2_goals
-                    else:
-                        # Teams are reversed - swap goals
-                        bracket['quarterFinals'][i]['team1_goals'] = team2_goals
-                        bracket['quarterFinals'][i]['team2_goals'] = team1_goals
-                    
+                if ((match_team1.get('id') == team1_id or match_team1.get('id') == team2_id) and
+                    (match_team2.get('id') == team1_id or match_team2.get('id') == team2_id)):
                     bracket['quarterFinals'][i]['winner'] = winner
                     bracket['quarterFinals'][i]['score'] = score_display
+                    bracket['quarterFinals'][i]['team1_goals'] = team1_goals
+                    bracket['quarterFinals'][i]['team2_goals'] = team2_goals
                     bracket['quarterFinals'][i]['goal_scorers'] = goal_scorers
                     bracket['quarterFinals'][i]['commentary'] = ["Live match - commentary generated during broadcast"]
                     bracket['quarterFinals'][i]['play_by_play'] = True
@@ -957,28 +941,12 @@ def save_live_match_result():
             for i, match in enumerate(bracket.get('semiFinals', [])):
                 match_team1 = match.get('team1', {})
                 match_team2 = match.get('team2', {})
-                match_team1_id = match_team1.get('id')
-                match_team2_id = match_team2.get('id')
-                
-                # Check if this is the correct match
-                teams_match = (
-                    (match_team1_id == team1_id and match_team2_id == team2_id) or
-                    (match_team1_id == team2_id and match_team2_id == team1_id)
-                )
-                
-                if teams_match:
-                    # Determine which team is which to assign goals correctly
-                    if match_team1_id == team1_id:
-                        # Teams match the expected order
-                        bracket['semiFinals'][i]['team1_goals'] = team1_goals
-                        bracket['semiFinals'][i]['team2_goals'] = team2_goals
-                    else:
-                        # Teams are reversed - swap goals
-                        bracket['semiFinals'][i]['team1_goals'] = team2_goals
-                        bracket['semiFinals'][i]['team2_goals'] = team1_goals
-                    
+                if ((match_team1.get('id') == team1_id or match_team1.get('id') == team2_id) and
+                    (match_team2.get('id') == team1_id or match_team2.get('id') == team2_id)):
                     bracket['semiFinals'][i]['winner'] = winner
                     bracket['semiFinals'][i]['score'] = score_display
+                    bracket['semiFinals'][i]['team1_goals'] = team1_goals
+                    bracket['semiFinals'][i]['team2_goals'] = team2_goals
                     bracket['semiFinals'][i]['goal_scorers'] = goal_scorers
                     bracket['semiFinals'][i]['commentary'] = ["Live match - commentary generated during broadcast"]
                     bracket['semiFinals'][i]['play_by_play'] = True
@@ -1007,28 +975,12 @@ def save_live_match_result():
             final_match = bracket.get('final', {})
             match_team1 = final_match.get('team1', {})
             match_team2 = final_match.get('team2', {})
-            match_team1_id = match_team1.get('id')
-            match_team2_id = match_team2.get('id')
-            
-            # Check if this is the correct match
-            teams_match = (
-                (match_team1_id == team1_id and match_team2_id == team2_id) or
-                (match_team1_id == team2_id and match_team2_id == team1_id)
-            )
-            
-            if teams_match:
-                # Determine which team is which to assign goals correctly
-                if match_team1_id == team1_id:
-                    # Teams match the expected order
-                    bracket['final']['team1_goals'] = team1_goals
-                    bracket['final']['team2_goals'] = team2_goals
-                else:
-                    # Teams are reversed - swap goals
-                    bracket['final']['team1_goals'] = team2_goals
-                    bracket['final']['team2_goals'] = team1_goals
-                
+            if ((match_team1.get('id') == team1_id or match_team1.get('id') == team2_id) and
+                (match_team2.get('id') == team1_id or match_team2.get('id') == team2_id)):
                 bracket['final']['winner'] = winner
                 bracket['final']['score'] = score_display
+                bracket['final']['team1_goals'] = team1_goals
+                bracket['final']['team2_goals'] = team2_goals
                 bracket['final']['goal_scorers'] = goal_scorers
                 bracket['final']['commentary'] = ["Live match - commentary generated during broadcast"]
                 bracket['final']['play_by_play'] = True
@@ -1231,34 +1183,12 @@ def simulate_match_internal(play_by_play=False):
                         for i, match in enumerate(bracket.get('quarterFinals', [])):
                             match_team1 = match.get('team1', {})
                             match_team2 = match.get('team2', {})
-                            match_team1_id = match_team1.get('id')
-                            match_team2_id = match_team2.get('id')
-                            
-                            # Check if this is the correct match (teams must match, regardless of order)
-                            teams_match = (
-                                (match_team1_id == team1_id and match_team2_id == team2_id) or
-                                (match_team1_id == team2_id and match_team2_id == team1_id)
-                            )
-                            
-                            if teams_match:
-                                # Determine which team is which to assign goals correctly
-                                if match_team1_id == team1_id:
-                                    # Teams match the expected order
-                                    bracket['quarterFinals'][i]['team1_goals'] = team1_goals
-                                    bracket['quarterFinals'][i]['team2_goals'] = team2_goals
-                                else:
-                                    # Teams are reversed - swap goals
-                                    bracket['quarterFinals'][i]['team1_goals'] = team2_goals
-                                    bracket['quarterFinals'][i]['team2_goals'] = team1_goals
-                                    # Swap winner to match team1 position if needed
-                                    if winner and winner.get('id') == team1_id and match_team1_id == team2_id:
-                                        # Winner is team1 but in bracket they're team2, find actual team1 in bracket
-                                        actual_team1 = match_team1
-                                        if actual_team1.get('id') == team1_id:
-                                            pass  # No swap needed
-                                
+                            if ((match_team1.get('id') == team1_id or match_team1.get('id') == team2_id) and
+                                (match_team2.get('id') == team1_id or match_team2.get('id') == team2_id)):
                                 bracket['quarterFinals'][i]['winner'] = winner
                                 bracket['quarterFinals'][i]['score'] = score_display
+                                bracket['quarterFinals'][i]['team1_goals'] = team1_goals
+                                bracket['quarterFinals'][i]['team2_goals'] = team2_goals
                                 bracket['quarterFinals'][i]['goal_scorers'] = goal_scorers
                                 bracket['quarterFinals'][i]['commentary'] = commentary
                                 bracket['quarterFinals'][i]['play_by_play'] = play_by_play
@@ -1302,28 +1232,12 @@ def simulate_match_internal(play_by_play=False):
                         for i, match in enumerate(bracket.get('semiFinals', [])):
                             match_team1 = match.get('team1', {})
                             match_team2 = match.get('team2', {})
-                            match_team1_id = match_team1.get('id')
-                            match_team2_id = match_team2.get('id')
-                            
-                            # Check if this is the correct match (teams must match, regardless of order)
-                            teams_match = (
-                                (match_team1_id == team1_id and match_team2_id == team2_id) or
-                                (match_team1_id == team2_id and match_team2_id == team1_id)
-                            )
-                            
-                            if teams_match:
-                                # Determine which team is which to assign goals correctly
-                                if match_team1_id == team1_id:
-                                    # Teams match the expected order
-                                    bracket['semiFinals'][i]['team1_goals'] = team1_goals
-                                    bracket['semiFinals'][i]['team2_goals'] = team2_goals
-                                else:
-                                    # Teams are reversed - swap goals
-                                    bracket['semiFinals'][i]['team1_goals'] = team2_goals
-                                    bracket['semiFinals'][i]['team2_goals'] = team1_goals
-                                
+                            if ((match_team1.get('id') == team1_id or match_team1.get('id') == team2_id) and
+                                (match_team2.get('id') == team1_id or match_team2.get('id') == team2_id)):
                                 bracket['semiFinals'][i]['winner'] = winner
                                 bracket['semiFinals'][i]['score'] = score_display
+                                bracket['semiFinals'][i]['team1_goals'] = team1_goals
+                                bracket['semiFinals'][i]['team2_goals'] = team2_goals
                                 bracket['semiFinals'][i]['goal_scorers'] = goal_scorers
                                 bracket['semiFinals'][i]['commentary'] = commentary
                                 bracket['semiFinals'][i]['play_by_play'] = play_by_play
@@ -1351,28 +1265,12 @@ def simulate_match_internal(play_by_play=False):
                         final_match = bracket.get('final', {})
                         match_team1 = final_match.get('team1', {})
                         match_team2 = final_match.get('team2', {})
-                        match_team1_id = match_team1.get('id')
-                        match_team2_id = match_team2.get('id')
-                        
-                        # Check if this is the correct match
-                        teams_match = (
-                            (match_team1_id == team1_id and match_team2_id == team2_id) or
-                            (match_team1_id == team2_id and match_team2_id == team1_id)
-                        )
-                        
-                        if teams_match:
-                            # Determine which team is which to assign goals correctly
-                            if match_team1_id == team1_id:
-                                # Teams match the expected order
-                                bracket['final']['team1_goals'] = team1_goals
-                                bracket['final']['team2_goals'] = team2_goals
-                            else:
-                                # Teams are reversed - swap goals
-                                bracket['final']['team1_goals'] = team2_goals
-                                bracket['final']['team2_goals'] = team1_goals
-                            
+                        if ((match_team1.get('id') == team1_id or match_team1.get('id') == team2_id) and
+                            (match_team2.get('id') == team1_id or match_team2.get('id') == team2_id)):
                             bracket['final']['winner'] = winner
                             bracket['final']['score'] = score_display
+                            bracket['final']['team1_goals'] = team1_goals
+                            bracket['final']['team2_goals'] = team2_goals
                             bracket['final']['goal_scorers'] = goal_scorers
                             bracket['final']['commentary'] = commentary
                             bracket['final']['play_by_play'] = play_by_play

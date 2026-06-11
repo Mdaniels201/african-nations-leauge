@@ -26,53 +26,42 @@ class SoundManager {
   }
 
   initializeSounds() {
-    // Real sound files from public/sounds folder
-    // Supports both .mp3 and .wav formats
+    const publicUrl = process.env.PUBLIC_URL || '';
+
     this.sounds = {
-      // Goal celebration - crowd cheering
       goal: {
-        src: '/sounds/goal-celebration.wav',
-        fallbacks: ['/sounds/goal-celebration.mp3', '/sounds/crowd-cheer.wav', '/sounds/crowd-cheer.mp3'],
+        src: `${publicUrl}/sounds/goal-celebration.wav`,
+        fallbacks: [],
         volume: 0.8,
-        duration: 3000 // 3 seconds
+        duration: 3000
       },
-      
-      // Referee whistle - short blast
       whistle: {
-        src: '/sounds/whistle-short.wav',
-        fallbacks: ['/sounds/whistle-short.mp3'],
+        src: `${publicUrl}/sounds/whistle-short.wav`,
+        fallbacks: [],
         volume: 0.6,
         duration: 800
       },
-      
-      // Match start/kickoff whistle
       kickoff: {
-        src: '/sounds/whistle-short.wav',
-        fallbacks: ['/sounds/whistle-short.mp3'],
+        src: `${publicUrl}/sounds/whistle-short.wav`,
+        fallbacks: [],
         volume: 0.5,
         duration: 800
       },
-      
-      // Half-time whistle - longer blast
       halftime: {
-        src: '/sounds/whistle-long.wav',
-        fallbacks: ['/sounds/whistle-long.mp3', '/sounds/whistle-short.wav', '/sounds/whistle-short.mp3'],
+        src: `${publicUrl}/sounds/whistle-long.wav`,
+        fallbacks: [`${publicUrl}/sounds/whistle-short.wav`],
         volume: 0.6,
         duration: 2000
       },
-      
-      // Full-time whistle - use short whistle since no triple file
       fulltime: {
-        src: '/sounds/whistle-short.wav',
-        fallbacks: ['/sounds/whistle-short.mp3'],
+        src: `${publicUrl}/sounds/whistle-short.wav`,
+        fallbacks: [],
         volume: 0.7,
         duration: 800
       },
-      
-      // General crowd excitement - use goal celebration
       cheer: {
-        src: '/sounds/goal-celebration.wav',
-        fallbacks: ['/sounds/goal-celebration.mp3'],
+        src: `${publicUrl}/sounds/goal-celebration.wav`,
+        fallbacks: [],
         volume: 0.6,
         duration: 2000
       }
