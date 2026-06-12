@@ -7,11 +7,11 @@ timeout = 300
 # Keep-alive timeout
 keepalive = 5
 
-# Worker class for async/streaming support
-worker_class = 'sync'
+# THE FIX: Switch worker class to gevent for async/streaming support
+worker_class = 'gevent'
 
-# Number of workers
-workers = 1
+# Increase workers slightly to handle concurrent traffic
+workers = 2
 
 # Logging
 accesslog = '-'
