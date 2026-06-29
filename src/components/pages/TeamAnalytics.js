@@ -50,6 +50,9 @@ const TeamAnalytics = () => {
     );
   }
 
+  const winAngle = analytics.matches_played > 0 ? (analytics.wins / analytics.matches_played) * 360 : 0;
+  const drawAngle = analytics.matches_played > 0 ? ((analytics.wins + analytics.draws) / analytics.matches_played) * 360 : 0;
+
   return (
     <div className="team-analytics">
       <div className="card">
@@ -135,11 +138,11 @@ const TeamAnalytics = () => {
             <div 
               className="win-rate-fill"
               style={{
-                background: `conic-gradient(
-                  #00b894 0deg ${(analytics.wins / analytics.matches_played) * 360}deg,
-                  #fd7e14 ${(analytics.wins / analytics.matches_played) * 360}deg ${((analytics.wins + analytics.draws) / analytics.matches_played) * 360}deg,
-                  #dc3545 ${((analytics.wins + analytics.draws) / analytics.matches_played) * 360}deg
-                )`
+                background: analytics.matches_played > 0 ? `conic-gradient(
+                  #00b894 0deg ${winAngle}deg,
+                  #fd7e14 ${winAngle}deg ${drawAngle}deg,
+                  #dc3545 ${drawAngle}deg
+                )` : '#e0e0e0'
               }}
             ></div>
             <div className="win-rate-text">

@@ -363,6 +363,7 @@ const AdminPanel = ({
         <LiveMatchSimulation
           team1={selectedMatch.team1}
           team2={selectedMatch.team2}
+          matchType={selectedMatch.matchType}
           onMatchComplete={handleLiveMatchComplete}
           onCancel={handleCancelLiveMatch}
         />

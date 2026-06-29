@@ -41,7 +41,9 @@ const Home = ({ teams, bracket, loading }) => {
             <div className="stat">
               <span className="stat-number">
                 {bracket ? (
-                  Object.values(bracket).filter(match => match && match.winner).length
+                  (bracket.quarterFinals?.filter(m => m && m.winner).length || 0) +
+                  (bracket.semiFinals?.filter(m => m && m.winner).length || 0) +
+                  (bracket.final?.winner ? 1 : 0)
                 ) : 0}
               </span>
               <span className="stat-label">Matches Played</span>

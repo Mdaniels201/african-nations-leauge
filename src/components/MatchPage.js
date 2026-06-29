@@ -249,6 +249,7 @@ const MatchPage = ({ bracket, onSimulateMatch, onPlayMatch, loading }) => {
         <LiveMatchSimulation
           team1={team1}
           team2={team2}
+          matchType={round}
           onMatchComplete={handleLiveMatchComplete}
           onCancel={handleCancelLiveMatch}
         />

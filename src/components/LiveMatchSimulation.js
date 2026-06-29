@@ -24,7 +24,7 @@ import { PlayIcon, GoalIcon, ClockIcon } from './ui/Icons'; // UI icons
 import soundManager from '../utils/soundManager'; // Sound effects manager
 import API_BASE_URL from '../config'; // API configuration
 
-const LiveMatchSimulation = ({ team1, team2, onMatchComplete, onCancel }) => {
+const LiveMatchSimulation = ({ team1, team2, matchType = 'quarterFinal', onMatchComplete, onCancel }) => {
   // ============================================================================
   // STATE MANAGEMENT
   // ============================================================================
@@ -36,6 +36,7 @@ const LiveMatchSimulation = ({ team1, team2, onMatchComplete, onCancel }) => {
   // Match content state
   const [commentary, setCommentary] = useState([]); // Array of commentary messages
   const [score, setScore] = useState({ team1: 0, team2: 0 }); // Live score tracking
+  const [penalties, setPenalties] = useState(null); // Live penalty shootout tracking
   const [events, setEvents] = useState([]); // Match events (goals, cards, etc.)
   
   // Match status state
@@ -76,7 +77,7 @@ const LiveMatchSimulation = ({ team1, team2, onMatchComplete, onCancel }) => {
         body: JSON.stringify({
           team1_id: team1.id,
           team2_id: team2.id,
-          match_type: 'quarterFinal'
+          match_type: matchType
         })
       });
 
@@ -175,9 +176,29 @@ const LiveMatchSimulation = ({ team1, team2, onMatchComplete, onCancel }) => {
         }
         break;
         
+      case 'penalty':
+        setPenalties(data.penalties);
+        const penaltyCommentary = {
+          minute: 120,
+          text: `${data.team} ${data.scored ? 'SCORES' : 'MISSES'} the penalty! (Shootout: ${data.penalties.team1} - ${data.penalties.team2})`,
+          type: 'penalty'
+        };
+        setCommentary(prev => [...prev, penaltyCommentary]);
+        if (soundEnabled) {
+          if (data.scored) {
+            soundManager.playSound('goal');
+          } else {
+            soundManager.playSound('whistle');
+          }
+        }
+        break;
+        
       case 'match_complete':
         setMatchComplete(true);
         setIsPlaying(false);
+        if (data.penalties) {
+          setPenalties(data.penalties);
+        }
         setTimeout(() => {
           onMatchComplete(data);
         }, 2000);
@@ -266,13 +287,19 @@ const LiveMatchSimulation = ({ team1, team2, onMatchComplete, onCancel }) => {
             height={30}
           />
           <span className="team-name">{team1.country}</span>
-          <span className="score">{score.team1}</span>
+          <span className="score">
+            {score.team1}
+            {penalties && <span className="penalty-score" style={{ fontSize: '0.8em', color: '#ccc' }}> ({penalties.team1})</span>}
+          </span>
         </div>
         
         <div className="vs-divider">-</div>
         
         <div className="team-score">
-          <span className="score">{score.team2}</span>
+          <span className="score">
+            {score.team2}
+            {penalties && <span className="penalty-score" style={{ fontSize: '0.8em', color: '#ccc' }}> ({penalties.team2})</span>}
+          </span>
           <span className="team-name">{team2.country}</span>
           <FlagIcon 
             iso2={isoForTeam(team2)} 

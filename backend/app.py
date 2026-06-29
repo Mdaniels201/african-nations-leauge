@@ -1200,7 +1200,10 @@ def simulate_match_internal(play_by_play=False):
                             qfs = bracket.get('quarterFinals', [])
                             # Left side: QF 0 vs QF 1
                             if len(qfs) >= 2 and qfs[0].get('winner') and qfs[1].get('winner'):
-                                left_sf = bracket.get('semiFinals', [{}, {}])[0]
+                                bracket.setdefault('semiFinals', [{}, {}])
+                                while len(bracket['semiFinals']) < 2:
+                                    bracket['semiFinals'].append({})
+                                left_sf = bracket['semiFinals'][0] or {}
                                 bracket['semiFinals'][0] = {
                                     'team1': qfs[0]['winner'],
                                     'team2': qfs[1]['winner'],
@@ -1214,7 +1217,10 @@ def simulate_match_internal(play_by_play=False):
                                 }
                             # Right side: QF 2 vs QF 3
                             if len(qfs) >= 4 and qfs[2].get('winner') and qfs[3].get('winner'):
-                                right_sf = bracket.get('semiFinals', [{}, {}])[1]
+                                bracket.setdefault('semiFinals', [{}, {}])
+                                while len(bracket['semiFinals']) < 2:
+                                    bracket['semiFinals'].append({})
+                                right_sf = bracket['semiFinals'][1] or {}
                                 bracket['semiFinals'][1] = {
                                     'team1': qfs[2]['winner'],
                                     'team2': qfs[3]['winner'],
