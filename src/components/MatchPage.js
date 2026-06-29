@@ -59,17 +59,7 @@ const MatchPage = ({ bracket, onSimulateMatch, onPlayMatch, loading }) => {
     }
   };
 
-  const handleQuickSim = async () => {
-    if (!canPlay) return;
-    const res = await onSimulateMatch(team1.id, team2.id, round);
-    if (res) setResult(res);
-  };
 
-
-
-  const handleLiveMatch = () => {
-    setShowLiveMatch(true);
-  };
 
   const handleLiveMatchComplete = async (matchResult) => {
     setResult(matchResult);

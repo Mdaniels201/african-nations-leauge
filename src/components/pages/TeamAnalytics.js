@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { AnalyticsIcon, GoalIcon, CheckIcon, WarningIcon, TeamIcon } from '../ui/Icons';
@@ -10,13 +10,7 @@ const TeamAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (teamId) {
-      fetchTeamAnalytics();
-    }
-  }, [teamId]);
-
-  const fetchTeamAnalytics = async () => {
+  const fetchTeamAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/teams/${teamId}/analytics`);
@@ -27,7 +21,13 @@ const TeamAnalytics = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [teamId]);
+
+  useEffect(() => {
+    if (teamId) {
+      fetchTeamAnalytics();
+    }
+  }, [teamId, fetchTeamAnalytics]);
 
   if (loading) {
     return (
