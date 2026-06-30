@@ -620,7 +620,7 @@ def live_stream_match():
             yield f"data: {json.dumps({'type': 'commentary', 'minute': 1, 'text': kickoff_commentary, 'commentary_type': 'kickoff'})}\n\n"
             
             # Simulate each minute
-            for minute in range(1, 97):  # 90 minutes + up to 6 mins injury time
+            for minute in range(1, 94):  # 90 minutes + small buffer
                 time.sleep(0.2)  # 0.2 seconds per minute for faster demo (prevents timeout)
                 
                 # Send keep-alive ping to prevent connection timeout
@@ -632,7 +632,7 @@ def live_stream_match():
                 team1_rating = team1.get('rating', 50)
                 team2_rating = team2.get('rating', 50)
                 
-                goal_chance = 0.03 if minute <= 90 else 0.01  # Lower chance in injury time
+                goal_chance = 0.03 if minute < 90 else 0.01  # Higher chance for demo
                 
                 if random.random() < goal_chance:
                     # Determine which team scores based on ratings
@@ -704,20 +704,15 @@ def live_stream_match():
                     second_half_commentary = f"We're back underway for the second half! {team2['country']} gets us started again. Can they find the breakthrough in this second period?"
                     yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': second_half_commentary, 'commentary_type': 'second_half'})}\n\n"
                 
-                # Injury time announcement at 90 mins
+                # Full-time at 90 minutes
                 elif minute == 90:
-                    injury_commentary = "The referee signals 6 minutes of added time! We're into stoppage time!"
-                    yield f"data: {json.dumps({'type': 'commentary', 'minute': 90, 'text': injury_commentary, 'commentary_type': 'match_event'})}\n\n"
-                
-                # Full-time (after injury time - 6 added minutes max)
-                elif minute == 96:
                     if team1_goals != team2_goals:
                         winner = team1 if team1_goals > team2_goals else team2
                         fulltime_commentary = f"Full-time! {team1['country']} {team1_goals} - {team2_goals} {team2['country']}. What a match! {winner['country']} takes the victory in this thrilling encounter."
-                        yield f"data: {json.dumps({'type': 'commentary', 'minute': 90, 'text': fulltime_commentary, 'commentary_type': 'fulltime'})}\n\n"
+                        yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': fulltime_commentary, 'commentary_type': 'fulltime'})}\n\n"
                     else:
                         fulltime_commentary = f"Full-time and it's all square! {team1['country']} {team1_goals} - {team2_goals} {team2['country']}. We're heading to extra time!"
-                        yield f"data: {json.dumps({'type': 'commentary', 'minute': 90, 'text': fulltime_commentary, 'commentary_type': 'fulltime'})}\n\n"
+                        yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': fulltime_commentary, 'commentary_type': 'fulltime'})}\n\n"
             
             # Extra time if draw (for knockout matches)
             penalties = None
@@ -726,7 +721,7 @@ def live_stream_match():
                 extra_time_start = f"Extra time begins! Both teams have 30 more minutes to find a winner."
                 yield f"data: {json.dumps({'type': 'commentary', 'minute': 91, 'text': extra_time_start, 'commentary_type': 'extra_time'})}\n\n"
                 
-                # Simulate extra time (30 minutes)
+                # Simulate extra time (30 minutes: 91-120)
                 for minute in range(91, 121):
                     time.sleep(0.2)
                     yield f": keepalive\n\n"

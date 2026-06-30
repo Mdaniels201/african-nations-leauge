@@ -227,7 +227,7 @@ const LiveMatchSimulation = ({ team1, team2, matchType = 'quarterFinal', onMatch
 
   const formatTime = (minutes) => {
     if (minutes <= 90) return `${minutes}'`;
-    return `90+${minutes - 90}'`;
+    return `${minutes}'`; // Extra time shows as 91'-120'
   };
 
   return (
@@ -243,8 +243,11 @@ const LiveMatchSimulation = ({ team1, team2, matchType = 'quarterFinal', onMatch
         <div className="match-timer">
           <ClockIcon size={24} />
           <span className="time-display">{formatTime(matchTime)}</span>
-          {matchTime >= 90 && !matchComplete && (
+          {matchTime >= 90 && matchTime < 91 && !matchComplete && (
             <span className="injury-time">Injury Time</span>
+          )}
+          {matchTime >= 91 && !matchComplete && (
+            <span className="injury-time">Extra Time</span>
           )}
         </div>
         
