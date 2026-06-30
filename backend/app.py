@@ -628,57 +628,45 @@ def live_stream_match():
                 
                 yield f"data: {json.dumps({'type': 'time_update', 'minute': minute})}\n\n"
                 
-                # Check for goals (higher probability for better teams)
+                # Check for goals independently for each team, weighted by rating
                 team1_rating = team1.get('rating', 50)
                 team2_rating = team2.get('rating', 50)
+                total_rating = team1_rating + team2_rating
                 
-                goal_chance = 0.03 if minute < 90 else 0.01  # Higher chance for demo
+                # Base chance per team per minute (~0.035 avg = ~3.15 goals/game total)
+                # Scaled by team rating so stronger teams score more often
+                base_chance = 0.035
+                team1_goal_chance = base_chance * (team1_rating / total_rating) * 2
+                team2_goal_chance = base_chance * (team2_rating / total_rating) * 2
                 
-                if random.random() < goal_chance:
-                    # Determine which team scores based on ratings
-                    total_rating = team1_rating + team2_rating
-                    team1_prob = team1_rating / total_rating
+                goal_scored_this_minute = False
+                
+                # Team 1 goal check
+                if random.random() < team1_goal_chance:
+                    team1_goals += 1
+                    goal_scored_this_minute = True
+                    attacking_players = [p for p in team1['players'] if p.get('naturalPosition') in ['AT', 'MD']]
+                    scorer = random.choice(attacking_players)['name'] if attacking_players else random.choice(team1['players'])['name']
                     
-                    if random.random() < team1_prob:
-                        # Team 1 scores
-                        team1_goals += 1
-                        attacking_players = [p for p in team1['players'] if p.get('naturalPosition') in ['AT', 'MD']]
-                        scorer = random.choice(attacking_players)['name'] if attacking_players else random.choice(team1['players'])['name']
-                        
-                        goal_scorers.append({
-                            'scorer': scorer,
-                            'team': team1['country'],
-                            'minute': minute
-                        })
-                        
-                        # Send goal event immediately
-                        yield f"data: {json.dumps({'type': 'goal', 'minute': minute, 'scorer': scorer, 'team': team1['country'], 'team_id': 1, 'score': {'team1': team1_goals, 'team2': team2_goals}})}\n\n"
-                        
-                        # Use quick fallback commentary (AI generation happens in background without blocking)
-                        goal_commentary = f"GOAL! {scorer} finds the back of the net for {team1['country']} in the {minute}th minute! What a brilliant strike! The score is now {team1['country']} {team1_goals} - {team2_goals} {team2['country']}."
-                        yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': goal_commentary, 'commentary_type': 'goal'})}\n\n"
-                        
-                    else:
-                        # Team 2 scores
-                        team2_goals += 1
-                        attacking_players = [p for p in team2['players'] if p.get('naturalPosition') in ['AT', 'MD']]
-                        scorer = random.choice(attacking_players)['name'] if attacking_players else random.choice(team2['players'])['name']
-                        
-                        goal_scorers.append({
-                            'scorer': scorer,
-                            'team': team2['country'],
-                            'minute': minute
-                        })
-                        
-                        # Send goal event immediately
-                        yield f"data: {json.dumps({'type': 'goal', 'minute': minute, 'scorer': scorer, 'team': team2['country'], 'team_id': 2, 'score': {'team1': team1_goals, 'team2': team2_goals}})}\n\n"
-                        
-                        # Use quick fallback commentary (AI generation happens in background without blocking)
-                        goal_commentary = f"GOAL! {scorer} scores for {team2['country']} in the {minute}th minute! Brilliant finish! The score is now {team1['country']} {team1_goals} - {team2_goals} {team2['country']}."
-                        yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': goal_commentary, 'commentary_type': 'goal'})}\n\n"
+                    goal_scorers.append({'scorer': scorer, 'team': team1['country'], 'minute': minute})
+                    yield f"data: {json.dumps({'type': 'goal', 'minute': minute, 'scorer': scorer, 'team': team1['country'], 'team_id': 1, 'score': {'team1': team1_goals, 'team2': team2_goals}})}\n\n"
+                    goal_commentary = f"GOAL! {scorer} finds the back of the net for {team1['country']} in the {minute}th minute! What a brilliant strike! The score is now {team1['country']} {team1_goals} - {team2_goals} {team2['country']}."
+                    yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': goal_commentary, 'commentary_type': 'goal'})}\n\n"
                 
-                # Random match commentary every few minutes
-                elif minute % 10 == 0 and random.random() < 0.7:
+                # Team 2 goal check (independent of team 1)
+                if random.random() < team2_goal_chance:
+                    team2_goals += 1
+                    goal_scored_this_minute = True
+                    attacking_players = [p for p in team2['players'] if p.get('naturalPosition') in ['AT', 'MD']]
+                    scorer = random.choice(attacking_players)['name'] if attacking_players else random.choice(team2['players'])['name']
+                    
+                    goal_scorers.append({'scorer': scorer, 'team': team2['country'], 'minute': minute})
+                    yield f"data: {json.dumps({'type': 'goal', 'minute': minute, 'scorer': scorer, 'team': team2['country'], 'team_id': 2, 'score': {'team1': team1_goals, 'team2': team2_goals}})}\n\n"
+                    goal_commentary = f"GOAL! {scorer} scores for {team2['country']} in the {minute}th minute! Brilliant finish! The score is now {team1['country']} {team1_goals} - {team2_goals} {team2['country']}."
+                    yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': goal_commentary, 'commentary_type': 'goal'})}\n\n"
+                
+                # Random match commentary every few minutes (only if no goal this minute)
+                if not goal_scored_this_minute and minute % 10 == 0 and random.random() < 0.7:
                     match_situations = [
                         f"Good attacking play from {random.choice([team1['country'], team2['country']])}",
                         f"Solid defensive work there from both teams",
@@ -693,6 +681,7 @@ def live_stream_match():
                     
                     commentary = random.choice(match_situations)
                     yield f"data: {json.dumps({'type': 'commentary', 'minute': minute, 'text': commentary, 'commentary_type': 'match_event'})}\n\n"
+
                 
                 # Half-time
                 if minute == 45:
